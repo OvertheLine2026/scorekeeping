@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OTL Costume Contest</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+
+  :root {
+    --navy: #1a3a5c;
+    --navy-light: #2a5080;
+    --gold: #f5a623;
+    --gold-dark: #c8841a;
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --border: #d1dce8;
+    --text: #1a2536;
+    --muted: #64748b;
+    --light: #94a3b8;
+    --green: #2d8a4e;
+    --green-bg: #e8f5ed;
+    --green-text: #1a5c32;
+    --green-border: #86efac;
+    --warn: #b45309;
+    --warn-bg: #fef3c7;
+    --warn-border: #fcd34d;
+    --blue-bg: #dbeafe;
+    --blue-text: #1e40af;
+    --blue-border: #93c5fd;
+    --red-bg: #fee2e2;
+    --red-text: #991b1b;
+    --red-border: #fca5a5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; }
+  .header p { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+  .judge-pill {
+    background: var(--gold);
+    color: var(--navy);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: none;
+  }
+
+  .nav {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav button {
+    flex: 1;
+    padding: 11px 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .nav button.active { color: var(--navy); border-bottom-color: var(--gold); }
+
+  .panel { display: none; padding: 14px; max-width: 600px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  .setup-wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+  .setup-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .setup-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .judge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+  .judge-btn {
+    padding: 20px 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    cursor: pointer;
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    transition: all 0.15s;
+  }
+
+  .judge-btn.selected { background: var(--navy); color: white; border-color: var(--navy); }
+
+  .start-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--navy);
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background 0.15s;
+  }
+
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .start-btn:not(:disabled):hover { background: var(--navy-light); }
+
+  .clear-btn {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .clear-btn:hover { background: var(--bg); }
+
+  .div-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+
+  .div-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .div-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+  .div-btn.complete { border-color: var(--green); color: var(--green); }
+  .div-btn.active.complete { background: var(--navy); color: white; }
+
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+
+  .team-card.scored { border-color: var(--green-border); }
+
+  .team-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 12px;
+  }
+
+  .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+  .score-btn {
+    padding: 12px 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    color: var(--text);
+    transition: all 0.1s;
+  }
+
+  .score-btn:active { transform: scale(0.93); }
+  .score-btn.s1, .score-btn.s2 { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
+  .score-btn.s3, .score-btn.s4 { background: var(--warn-bg); color: var(--warn); border-color: var(--warn-border); }
+  .score-btn.s7, .score-btn.s8 { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
+  .score-btn.s9, .score-btn.s10 { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .score-btn.selected { background: var(--navy) !important; color: white !important; border-color: var(--navy) !important; }
+
+  .score-status { font-size: 12px; text-align: center; margin-top: 8px; min-height: 18px; }
+  .score-status.saved { color: var(--green); font-weight: 500; }
+  .score-status.saving { color: var(--muted); }
+
+  .progress-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .progress-label { font-size: 13px; color: var(--muted); }
+  .progress-count { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--navy); }
+
+  .waiting-wrap {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+
+  .waiting-icon { font-size: 40px; margin-bottom: 12px; }
+  .waiting-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .waiting-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .judge-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
+
+  .judge-status {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  .judge-status.done { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
+  .judge-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .judge-status.done .judge-status-dot { background: var(--green); }
+
+  .refresh-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: background 0.15s;
+  }
+
+  .refresh-btn:hover { background: var(--bg); }
+
+  /* Winners display */
+  .winners-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .winner-card {
+    background: var(--surface);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .winner-div {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 6px;
+  }
+
+  .winner-trophy { font-size: 28px; margin-bottom: 6px; }
+
+  .winner-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+
+  .winner-avg {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold-dark);
+    line-height: 1;
+  }
+
+  .winner-avg-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .winner-judge-scores {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .judge-score-pill {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    color: var(--blue-text);
+    font-weight: 500;
+  }
+
+  .view-sheet-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gold);
+    color: var(--navy);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.15s;
+  }
+
+  .view-sheet-btn:hover { opacity: 0.9; }
+  .loading-msg { text-align: center; padding: 32px; color: var(--light); font-size: 14px; }
+  .empty-msg { text-align: center; padding: 32px; color: var(--light); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>OTL Costume Contest</h1>
+    <p>Bulldogs 2026 · May 17, 2026</p>
+  </div>
+  <div class="judge-pill" id="judge-pill">Judge 1</div>
+</div>
+
+<div id="setup-screen" class="setup-wrap">
+  <div class="setup-title">Welcome, judge!</div>
+  <div class="setup-sub">Select your judge number to begin scoring. If you've judged before on this device, tap "Clear my scores" to start fresh.</div>
+  <div class="judge-grid">
+    <button class="judge-btn" onclick="selectJudge(1)">Judge 1</button>
+    <button class="judge-btn" onclick="selectJudge(2)">Judge 2</button>
+    <button class="judge-btn" onclick="selectJudge(3)">Judge 3</button>
+    <button class="judge-btn" onclick="selectJudge(4)">Judge 4</button>
+  </div>
+  <button class="start-btn" id="start-btn" onclick="startJudging()" disabled>Start judging →</button>
+  <button class="clear-btn" onclick="clearScores()">Clear my scores on this device</button>
+</div>
+
+<div id="main-screen" style="display:none">
+  <div class="nav">
+    <button class="active" onclick="showTab('score',this)">Score</button>
+    <button id="results-tab-btn" onclick="tryShowResults(this)">Results</button>
+  </div>
+
+  <div id="score" class="panel active">
+    <div id="progress-bar" class="progress-bar">
+      <div class="progress-label">Teams scored this division</div>
+      <div class="progress-count" id="progress-count">0 / 0</div>
+    </div>
+    <div class="div-selector" id="div-selector"></div>
+    <div id="team-list"><div class="loading-msg">Loading teams...</div></div>
+  </div>
+
+  <div id="results" class="panel">
+    <div id="results-content"></div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyUzDHgQpi9zuKZf8rUXTaRz3snscl4ZRfPhUzW8yFYg8HPenKKgKjDd7mJFQcDvaxW-w/exec';
+const MASTER_SHEET_ID = '1bRgd_1q98swvofm2r1Sonmvam80UU_0rMbnxb0bcvMg';
+const COSTUME_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1W-57050t1HKp8A9ipyQ73I1Hyn9jHvm619ObzSo1D-E/edit';
+const DIVISIONS = ['Acorn 1','Acorn 2','Minors','Majors','Intermediate','Junior'];
+const TOTAL_JUDGES = 4;
+
+let judgeNum = null;
+let currentDiv = null;
+let localScores = {};
+let savingState = {};
+let TEAMS = [];
+
+function clearScores() {
+  if (confirm('Clear all scores on this device? This only affects this device.')) {
+    localScores = {};
+    alert('Scores cleared!');
+  }
+}
+
+async function loadTeams() {
+  try {
+    const url = 'https://docs.google.com/spreadsheets/d/' + MASTER_SHEET_ID + '/gviz/tq?tqx=out:json&sheet=Sheet1';
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+    const rows = json.table.rows;
+    TEAMS = rows
+      .filter(r => r.c && r.c[2] && r.c[2].v)
+      .map(r => ({
+        name: String(r.c[2].v).trim(),
+        division: (r.c[3] && r.c[3].v) ? String(r.c[3].v).trim() : 'Unknown'
+      }))
+      .filter(t => t.name && t.name !== 'Team Name');
+    TEAMS.sort((a, b) => {
+      const da = DIVISIONS.indexOf(a.division), db = DIVISIONS.indexOf(b.division);
+      return (da === -1 ? 99 : da) - (db === -1 ? 99 : db) || a.name.localeCompare(b.name);
+    });
+  } catch(e) { TEAMS = []; }
+}
+
+function selectJudge(n) {
+  judgeNum = n;
+  document.querySelectorAll('.judge-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === n));
+  document.getElementById('start-btn').disabled = false;
+}
+
+async function startJudging() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'block';
+  const pill = document.getElementById('judge-pill');
+  pill.textContent = 'Judge ' + judgeNum;
+  pill.style.display = 'inline-block';
+  document.getElementById('team-list').innerHTML = '<div class="loading-msg">Loading teams from roster...</div>';
+  await loadTeams();
+  buildDivSelector();
+  const activeDivs = DIVISIONS.filter(d => TEAMS.some(t => t.division === d));
+  if (activeDivs.length) selectDiv(activeDivs[0]);
+}
+
+function buildDivSelector() {
+  const activeDivs = DIVISIONS.filter(d => TEAMS.some(t => t.division === d));
+  document.getElementById('div-selector').innerHTML = activeDivs.map(d =>
+    '<button class="div-btn" id="divbtn_' + d.replace(/\s/g,'_') + '" onclick="selectDiv(\'' + d + '\')">' + d + '</button>'
+  ).join('');
+}
+
+function updateDivProgress() {
+  const activeDivs = DIVISIONS.filter(d => TEAMS.some(t => t.division === d));
+  activeDivs.forEach(div => {
+    const teams = TEAMS.filter(t => t.division === div);
+    const scored = teams.filter(t => localScores['j' + judgeNum + '_' + t.name]).length;
+    const btn = document.getElementById('divbtn_' + div.replace(/\s/g,'_'));
+    if (btn) btn.classList.toggle('complete', scored === teams.length && teams.length > 0);
+  });
+}
+
+function selectDiv(div) {
+  currentDiv = div;
+  document.querySelectorAll('.div-btn').forEach(b => b.classList.toggle('active', b.textContent === div));
+  renderTeams();
+  updateProgress();
+}
+
+function updateProgress() {
+  const teams = TEAMS.filter(t => t.division === currentDiv);
+  const scored = teams.filter(t => localScores['j' + judgeNum + '_' + t.name]).length;
+  const bar = document.getElementById('progress-bar');
+  const count = document.getElementById('progress-count');
+  if (teams.length > 0) {
+    bar.style.display = 'flex';
+    count.textContent = scored + ' / ' + teams.length;
+    count.style.color = scored === teams.length ? 'var(--green)' : 'var(--navy)';
+  }
+}
+
+function renderTeams() {
+  const teams = TEAMS.filter(t => t.division === currentDiv);
+  if (!teams.length) {
+    document.getElementById('team-list').innerHTML = '<div class="empty-msg">No teams in this division yet</div>';
+    return;
+  }
+  document.getElementById('team-list').innerHTML = teams.map(t => {
+    const key = 'j' + judgeNum + '_' + t.name;
+    const current = localScores[key] || null;
+    const isSaving = savingState[key];
+    const btns = [1,2,3,4,5,6,7,8,9,10].map(n =>
+      '<button class="score-btn s' + n + (current === n ? ' selected' : '') + '" onclick="recordScore(\'' + t.name.replace(/'/g, "\\'") + '\',\'' + t.division + '\',' + n + ')">' + n + '</button>'
+    ).join('');
+    const status = isSaving
+      ? '<div class="score-status saving">Saving...</div>'
+      : current
+        ? '<div class="score-status saved">Saved: ' + current + ' / 10</div>'
+        : '<div class="score-status"></div>';
+    return '<div class="team-card' + (current ? ' scored' : '') + '"><div class="team-name">' + t.name + '</div><div class="score-grid">' + btns + '</div>' + status + '</div>';
+  }).join('');
+}
+
+async function recordScore(team, division, val) {
+  const key = 'j' + judgeNum + '_' + team;
+  localScores[key] = val;
+  savingState[key] = true;
+  renderTeams();
+  updateProgress();
+  updateDivProgress();
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ judge: 'Judge ' + judgeNum, team, score: val, division })
+    });
+  } catch(e) {}
+  savingState[key] = false;
+  renderTeams();
+}
+
+async function tryShowResults(btn) {
+  document.getElementById('results-content').innerHTML = '<div class="loading-msg">Checking scores...</div>';
+  showTab('results', btn);
+
+  let allScores = [];
+  try {
+    const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+    const data = await res.json();
+    allScores = data.slice(1);
+  } catch(e) {}
+
+  const judgesCompleted = [1,2,3,4].filter(j =>
+    TEAMS.every(t => allScores.some(r => r[0] === 'Judge ' + j && r[1] === t.name))
+  );
+
+  if (judgesCompleted.length < TOTAL_JUDGES) {
+    renderWaiting(judgesCompleted, allScores);
+  } else {
+    renderResults(allScores);
+  }
+}
+
+function renderWaiting(judgesCompleted, allScores) {
+  const judgeStatusHTML = [1,2,3,4].map(j => {
+    const done = judgesCompleted.includes(j);
+    const scored = allScores.filter(r => r[0] === 'Judge ' + j).length;
+    return '<div class="judge-status' + (done ? ' done' : '') + '"><div class="judge-status-dot"></div>Judge ' + j + (done ? ' — Done' : ' — ' + scored + '/' + TEAMS.length) + '</div>';
+  }).join('');
+
+  document.getElementById('results-content').innerHTML =
+    '<div class="waiting-wrap">' +
+    '<div class="waiting-icon">⏳</div>' +
+    '<div class="waiting-title">Waiting for all judges</div>' +
+    '<div class="waiting-sub">' + judgesCompleted.length + ' of ' + TOTAL_JUDGES + ' judges have finished. Results unlock when all judges are done.</div>' +
+    '<div class="judge-status-grid">' + judgeStatusHTML + '</div>' +
+    '</div>' +
+    '<button class="refresh-btn" onclick="tryShowResults(document.getElementById(\'results-tab-btn\'))">↻ Check again</button>';
+}
+
+function renderResults(allScores) {
+  const activeDivs = DIVISIONS.filter(d => TEAMS.some(t => t.division === d));
+
+  const winnerCards = activeDivs.map(div => {
+    const teams = TEAMS.filter(t => t.division === div);
+    const teamData = teams.map(t => {
+      const tScores = allScores.filter(r => r[1] === t.name);
+      const judgeScores = [1,2,3,4].map(j => {
+        const row = tScores.find(r => r[0] === 'Judge ' + j);
+        return row ? Number(row[2]) : null;
+      });
+      const valid = judgeScores.filter(s => s !== null);
+      const avg = valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
+      return { name: t.name, judgeScores, avg };
+    });
+
+    const winner = teamData.reduce((best, t) => (!best || (t.avg !== null && t.avg > best.avg)) ? t : best, null);
+    if (!winner || winner.avg === null) return '';
+
+    const pills = [1,2,3,4].map(j =>
+      '<span class="judge-score-pill">J' + j + ': ' + (winner.judgeScores[j-1] !== null ? winner.judgeScores[j-1] : '—') + '</span>'
+    ).join('');
+
+    return '<div class="winner-card">' +
+      '<div class="winner-div">' + div + '</div>' +
+      '<div class="winner-trophy">🏆</div>' +
+      '<div class="winner-name">' + winner.name + '</div>' +
+      '<div class="winner-avg">' + winner.avg.toFixed(1) + '</div>' +
+      '<div class="winner-avg-label">average score out of 10</div>' +
+      '<div class="winner-judge-scores">' + pills + '</div>' +
+      '</div>';
+  }).join('');
+
+  document.getElementById('results-content').innerHTML =
+    '<div class="winners-title">Division winners</div>' +
+    winnerCards +
+    '<button class="refresh-btn" style="margin-top:8px" onclick="tryShowResults(document.getElementById(\'results-tab-btn\'))">↻ Refresh</button>' +
+    '<button class="view-sheet-btn" onclick="window.open(\'' + COSTUME_SHEET_URL + '\',\'_blank\')">View full results in Google Sheet</button>';
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
