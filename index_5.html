@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OTL - Scorekeeping</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; min-height: 100vh; padding: 10px; }
+  .app { max-width: 420px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e0e0d8; }
+  .header h1 { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+  .wake-status { font-size: 10px; color: #aaa; margin-top: 2px; }
+  .wake-status.active { color: #1D9E75; }
+
+  .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .team-input label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 3px; }
+  .team-input input { font-size: 14px; font-weight: 600; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; background: white; color: #1a1a1a; width: 100%; -webkit-appearance: none; }
+
+  .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; margin-bottom: 10px; align-items: center; }
+  .score-card { background: #eeeee8; border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid #ddd; }
+  .score-card.active { border: 2.5px solid #1D9E75; background: #f0faf5; }
+  .score-card .slabel { font-size: 11px; color: #666; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score-card .runs { font-size: 52px; font-weight: 600; color: #1a1a1a; line-height: 1; }
+  .score-card .badge { font-size: 10px; background: #1D9E75; color: white; padding: 2px 7px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+
+  .middle-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .outs-row { display: flex; align-items: center; gap: 5px; }
+  .outs-label { font-size: 11px; color: #888; }
+  .outs-dots { display: flex; gap: 5px; }
+  .out-dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #ccc; background: transparent; }
+  .out-dot.filled { background: #D85A30; border-color: #D85A30; }
+
+  .diamond { position: relative; width: 84px; height: 84px; }
+  .base { position: absolute; width: 20px; height: 20px; border-radius: 2px; border: 1.5px solid #ccc; background: white; display: flex; align-items: center; justify-content: center; font-size: 9px; transition: background 0.15s; }
+  .base.occupied { background: #1D9E75; border-color: #0F6E56; color: white; }
+  #base-home { bottom: 0; left: 50%; transform: translateX(-50%) rotate(45deg); }
+  #base-first { right: 0; top: 50%; transform: translateY(-50%) rotate(45deg); }
+  #base-second { top: 0; left: 50%; transform: translateX(-50%) rotate(45deg); }
+  #base-third { left: 0; top: 50%; transform: translateY(-50%) rotate(45deg); }
+
+  .section-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px; }
+
+  .hit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .hit-btn { padding: 26px 8px; border-radius: 12px; border: 1px solid #ddd; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
+  .hit-btn:active { transform: scale(0.94); }
+  .hit-btn .hlabel { font-size: 17px; font-weight: 600; color: #1a1a1a; }
+  .btn-single { background: #EAF3DE; border-color: #639922; }
+  .btn-double { background: #FAEEDA; border-color: #BA7517; }
+  .btn-triple { background: #E6F1FB; border-color: #185FA5; }
+  .btn-hr     { background: #FCEBEB; border-color: #A32D2D; }
+
+  .out-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .out-btn { padding: 18px 8px; border-radius: 8px; border: 1.5px solid #A32D2D; background: #FCEBEB; cursor: pointer; text-align: center; color: #A32D2D; -webkit-tap-highlight-color: transparent; }
+  .out-btn:active { transform: scale(0.94); }
+  .out-btn .out-main { font-size: 17px; font-weight: 700; }
+  .out-btn .out-sub { font-size: 10px; font-weight: 400; margin-top: 4px; opacity: 0.8; }
+  .undo-btn { border-color: #ccc; background: #eeeee8; color: #666; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  .switch-banner { background: #D85A30; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 10px; display: none; }
+  .switch-banner .sw-title { font-size: 18px; font-weight: 600; color: white; }
+  .switch-banner .sw-sub { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+  .switch-banner .sw-btn { margin-top: 10px; padding: 8px 20px; border-radius: 8px; border: none; background: white; color: #D85A30; font-size: 14px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+  .log-toggle-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 12px; color: #888; margin-bottom: 10px; text-align: center; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .log-toggle-btn:active { background: #eee; }
+
+  .log-expanded { display: none; border: 1px solid #e0e0d8; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; background: white; max-height: 60vh; overflow-y: auto; }
+  .log-expanded.open { display: block; }
+  .log-entry { font-size: 11px; color: #666; padding: 3px 0; border-bottom: 1px solid #f0f0ea; display: flex; justify-content: space-between; gap: 8px; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-empty { font-size: 11px; color: #aaa; text-align: center; padding: 6px 0; }
+  .log-header { font-size: 10px; color: #aaa; text-align: right; margin-bottom: 6px; }
+
+  .reset-btn { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 13px; color: #888; -webkit-tap-highlight-color: transparent; }
+  .reset-btn:active { background: #eee; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>OTL - Scorekeeping</h1>
+    <div class="wake-status" id="wake-status">Screen lock active</div>
+  </div>
+
+  <div class="teams">
+    <div class="team-input"><label>Home</label><input id="t1" value="Team A" oninput="renderAll()"></div>
+    <div class="team-input"><label>Away</label><input id="t2" value="Team B" oninput="renderAll()"></div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-card" id="card1">
+      <div class="slabel" id="slabel1">Team A</div>
+      <div class="runs" id="sc1">0</div>
+    </div>
+    <div class="middle-col">
+      <div class="outs-row">
+        <span class="outs-label">outs</span>
+        <div class="outs-dots">
+          <div class="out-dot" id="d0"></div>
+          <div class="out-dot" id="d1"></div>
+          <div class="out-dot" id="d2"></div>
+        </div>
+      </div>
+      <div class="diamond">
+        <div class="base" id="base-second"><span id="b2t"></span></div>
+        <div class="base" id="base-third"><span id="b3t"></span></div>
+        <div class="base" id="base-first"><span id="b1t"></span></div>
+        <div class="base" id="base-home"></div>
+      </div>
+    </div>
+    <div class="score-card" id="card2">
+      <div class="slabel" id="slabel2">Team B</div>
+      <div class="runs" id="sc2">0</div>
+    </div>
+  </div>
+
+  <div class="switch-banner" id="switch-banner">
+    <div class="sw-title" id="sw-title"></div>
+    <div class="sw-sub" id="sw-sub"></div>
+    <button class="sw-btn" onclick="dismissSwitch()">Got it — switching!</button>
+  </div>
+
+  <div class="section-label">Record a hit</div>
+  <div class="hit-grid">
+    <button class="hit-btn btn-single" onclick="recordHit(1,false)"><div class="hlabel">Single</div></button>
+    <button class="hit-btn btn-double" onclick="recordHit(2,false)"><div class="hlabel">Double</div></button>
+    <button class="hit-btn btn-triple" onclick="recordHit(3,false)"><div class="hlabel">Triple</div></button>
+    <button class="hit-btn btn-hr" onclick="recordHit(4,true)"><div class="hlabel">Home Run</div></button>
+  </div>
+
+  <div class="section-label">Record an out</div>
+  <div class="out-row">
+    <button class="out-btn" onclick="recordOut()">
+      <div class="out-main">OUT</div>
+      <div class="out-sub">(fly out · clean field · 4th pitch miss/foul)</div>
+    </button>
+    <button class="out-btn undo-btn" onclick="undoLast()">↩ Undo last</button>
+  </div>
+
+  <button class="log-toggle-btn" id="log-toggle" onclick="toggleLog()">📋 View play log</button>
+  <div class="log-expanded" id="log-expanded">
+    <div class="log-header" id="log-count"></div>
+    <div id="log-inner"><div class="log-empty">No plays yet</div></div>
+  </div>
+
+  <button class="reset-btn" onclick="resetGame()">Reset game</button>
+</div>
+
+<script>
+var G={scores:[0,0],bases:[false,false,false],outs:0,batting:0,turnHR:0,log:[],history:[],switching:false};
+var logOpen=false;
+var wakeLock=null;
+
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+      document.getElementById('wake-status').textContent='Screen will stay on';
+      document.getElementById('wake-status').className='wake-status active';
+      wakeLock.addEventListener('release',function(){
+        document.getElementById('wake-status').textContent='Screen lock active';
+        document.getElementById('wake-status').className='wake-status';
+      });
+    }
+  } catch(e){ console.log('Wake lock not available'); }
+}
+
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible') requestWakeLock();
+});
+
+function toggleLog(){
+  logOpen=!logOpen;
+  document.getElementById('log-expanded').className='log-expanded'+(logOpen?' open':'');
+  document.getElementById('log-toggle').innerHTML=logOpen?'📋 Hide play log':'📋 View play log';
+  if(logOpen) renderLog();
+}
+
+function tname(i){return(document.getElementById(i===0?'t1':'t2').value.trim()||(i===0?'Team A':'Team B'));}
+function saveHistory(){G.history.push(JSON.stringify({scores:G.scores.slice(),bases:G.bases.slice(),outs:G.outs,batting:G.batting,turnHR:G.turnHR,log:G.log.slice(),switching:G.switching}));if(G.history.length>100)G.history.shift();}
+
+function switchTeams(reason){
+  G.switching=true;G.bases=[false,false,false];G.outs=0;G.turnHR=0;
+  var next=G.batting===0?1:0;
+  document.getElementById('sw-title').textContent=(reason==='hr'?'⚡ 5 Home Runs! Switch teams!':'3 Outs! Switch teams!');
+  document.getElementById('sw-sub').textContent=tname(G.batting)+' now fields · '+tname(next)+' bats';
+  document.getElementById('switch-banner').style.display='block';
+  addLog('--- Switch: '+tname(next)+' now batting ---');
+  G.batting=next;renderAll();
+}
+function dismissSwitch(){G.switching=false;document.getElementById('switch-banner').style.display='none';}
+
+function recordHit(bases,isHR){
+  if(G.switching)return;
+  saveHistory();
+  var runs=0,newBases=[false,false,false];
+  for(var i=2;i>=0;i--){if(G.bases[i]){var dest=i+bases;if(dest>=3)runs++;else newBases[dest]=true;}}
+  var bd=bases-1;if(bd>=3)runs++;else newBases[bd]=true;
+  G.bases=newBases;G.scores[G.batting]+=runs;
+  if(isHR) G.turnHR++;
+  var names=['single','double','triple','home run'];
+  addLog(tname(G.batting)+': '+names[bases-1]+(runs>0?' · '+runs+' run'+(runs>1?'s':''):''));
+  if(isHR && G.turnHR>=5){switchTeams('hr');}else{renderAll();}
+}
+
+function recordOut(){
+  if(G.switching)return;
+  saveHistory();
+  G.outs++;
+  addLog(tname(G.batting)+': out ('+G.outs+'/3)');
+  if(G.outs>=3){switchTeams('outs');}else{renderAll();}
+}
+
+function undoLast(){if(G.history.length===0)return;var p=JSON.parse(G.history.pop());G.scores=p.scores;G.bases=p.bases;G.outs=p.outs;G.batting=p.batting;G.turnHR=p.turnHR;G.log=p.log;G.switching=p.switching;document.getElementById('switch-banner').style.display='none';renderAll();}
+function addLog(txt){var now=new Date();G.log.push({text:txt,time:now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')});if(logOpen)renderLog();}
+
+function renderLog(){
+  var inner=document.getElementById('log-inner');
+  document.getElementById('log-count').textContent=G.log.length+' plays recorded';
+  if(G.log.length===0){inner.innerHTML='<div class="log-empty">No plays yet</div>';}
+  else{inner.innerHTML=G.log.slice().reverse().map(function(e){return'<div class="log-entry"><span>'+e.text+'</span><span>'+e.time+'</span></div>';}).join('');}
+}
+
+function renderAll(){
+  document.getElementById('sc1').textContent=G.scores[0];
+  document.getElementById('sc2').textContent=G.scores[1];
+  document.getElementById('slabel1').textContent=tname(0);
+  document.getElementById('slabel2').textContent=tname(1);
+  var c1=document.getElementById('card1'),c2=document.getElementById('card2');
+  c1.className='score-card'+(G.batting===0?' active':'');
+  c2.className='score-card'+(G.batting===1?' active':'');
+  c1.querySelectorAll('.badge').forEach(function(b){b.remove();});
+  c2.querySelectorAll('.badge').forEach(function(b){b.remove();});
+  var ab=document.createElement('div');ab.className='badge';ab.textContent='batting';
+  document.getElementById(G.batting===0?'card1':'card2').appendChild(ab);
+  for(var i=0;i<3;i++)document.getElementById('d'+i).className='out-dot'+(i<G.outs?' filled':'');
+  var be=[document.getElementById('base-first'),document.getElementById('base-second'),document.getElementById('base-third')];
+  for(var j=0;j<3;j++){if(G.bases[j]){be[j].className='base occupied';be[j].querySelector('span').textContent='●';}else{be[j].className='base';be[j].querySelector('span').textContent='';}}
+  if(logOpen)renderLog();
+}
+
+function resetGame(){if(!confirm('Reset game? All scores cleared.'))return;document.getElementById('switch-banner').style.display='none';logOpen=false;document.getElementById('log-expanded').className='log-expanded';document.getElementById('log-toggle').innerHTML='📋 View play log';G={scores:[0,0],bases:[false,false,false],outs:0,batting:0,turnHR:0,log:[],history:[],switching:false};renderAll();}
+
+renderAll();
+requestWakeLock();
+</script>
+</body>
+</html>
